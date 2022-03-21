@@ -9,14 +9,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-const (
-	Success = iota
-	Unknown
-)
-
-//var db *sql.DB
-var dbroot string = "root:gomjun423009@tcp(gomjun.asuscomm.com:3306)/olympus"
-
 func main() {
 	http.HandleFunc("/login", lobby.LoginHandler)
 	http.HandleFunc("/signup", lobby.SignUpHandler)
