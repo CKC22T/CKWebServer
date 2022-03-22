@@ -9,13 +9,13 @@ import (
 )
 
 type SignUpReq struct {
-	Id   string
-	Pw   string
-	Nick string
+	Id   string `json:"id"`
+	Pw   string `json:"pw"`
+	Nick string `json:"nick"`
 }
 
 type SignUpRes struct {
-	Err int
+	Err int `json:"err"`
 }
 
 func SignUpHandler(w http.ResponseWriter, r *http.Request) {

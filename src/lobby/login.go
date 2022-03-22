@@ -9,12 +9,12 @@ import (
 )
 
 type SignInReq struct {
-	Id string
-	Pw string
+	Id string `json:"id"`
+	Pw string `json:"pw"`
 }
 type SignInRes struct {
 	Err  int `json:"err"`
-	Uuid int
+	Uuid int `json:"uuid"`
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
