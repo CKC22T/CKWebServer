@@ -28,22 +28,16 @@ type DediProc struct {
 	Addr Address
 }
 
+type ResponsePacket struct {
+	Err   int                 `json:"err"`
+	Param map[string]struct{} `json:"param"`
+}
+
 var dediServers = map[int]*DediProc{}
 var dediCodeCount = 0
 var dediInitPort = 16000
 
 func main() {
-	process := exec.Command("../../Build/CKDedi/CKC2022.exe")
-	process.SysProcAttr = &syscall.SysProcAttr{}
-	process.SysProcAttr.CreationFlags = 16
-	process.SysProcAttr.HideWindow = false
-	process.SysProcAttr.NoInheritHandles = true
-
-	err := process.Start()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	http.HandleFunc("/login", lobby.LoginHandler)
 	http.HandleFunc("/signup", lobby.SignUpHandler)
 	http.HandleFunc("/getuserinfo", lobby.GetUserInfoHandler)
@@ -61,6 +55,7 @@ func main() {
 func ProcessHandler(w http.ResponseWriter, r *http.Request) {
 	process := exec.Command("../../Build/CKDedi/CKC2022.exe", strconv.Itoa(dediCodeCount))
 	process.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 16, NoInheritHandles: true}
+
 	// process.SysProcAttr.CreationFlags = 16
 	// process.SysProcAttr.HideWindow = false
 	// process.SysProcAttr.NoInheritHandles = true
@@ -73,6 +68,7 @@ func ProcessHandler(w http.ResponseWriter, r *http.Request) {
 	dediServers[dediCodeCount] = dediProc
 	dediCodeCount = dediCodeCount + 1
 
+	dediProc.IsOn = make(chan bool)
 	isOn := <-dediProc.IsOn
 	if isOn {
 		log.Printf("[Dedi] Dedicated Server On : ID[%v] IP[%v] Port[%v]", dediProc.Id, dediProc.Addr.Ip, dediProc.Addr.Port)
@@ -87,7 +83,9 @@ func DedicatedProcessOnHandler(w http.ResponseWriter, r *http.Request) {
 	var addr Address
 	json.NewDecoder(r.Body).Decode(&addr)
 	var procId = addr.Port - dediInitPort
+	dediServers[procId].Addr.Ip = addr.Ip
 	dediServers[procId].IsOn <- true
+	json.NewEncoder(w).Encode(true)
 }
 
 //SocketHandler
