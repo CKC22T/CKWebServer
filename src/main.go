@@ -51,7 +51,7 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Hello, world")
 	})
-	//http.HandleFunc("/ws", socketHandler)
+	http.HandleFunc("/ws", SocketHandler)
 
 	http.ListenAndServe(":3000", nil)
 }
