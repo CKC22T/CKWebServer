@@ -1,6 +1,6 @@
 package packet
 
 const (
-	Success = iota
-	Unknown
+	Unknown = iota - 1
+	Success
 )
