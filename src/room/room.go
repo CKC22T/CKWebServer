@@ -63,8 +63,8 @@ type Room struct {
 }
 
 type RoomInfoRes struct {
-	Err      int  `json:"err"`
-	RoomInfo Room `json:"roomInfo"`
+	Err      packet.ErrorCode `json:"err"`
+	RoomInfo Room             `json:"roomInfo"`
 }
 
 var rooms = map[int]*Room{}

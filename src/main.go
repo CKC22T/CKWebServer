@@ -3,15 +3,14 @@ package main
 import (
 	"fmt"
 	"lobby"
-	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"profile"
 	"room"
+	"websocket"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/gorilla/websocket"
 )
 
 type Address struct {
@@ -37,6 +36,9 @@ var dediInitPort = 16000
 
 func main() {
 	room.SetIp()
+	hub := websocket.NewHub()
+	go hub.Run()
+
 	http.HandleFunc("/login", lobby.LoginHandler)
 	http.HandleFunc("/signup", lobby.SignUpHandler)
 	http.HandleFunc("/getuserinfo", lobby.GetUserInfoHandler)
@@ -51,37 +53,9 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Hello, world")
 	})
-	http.HandleFunc("/ws", SocketHandler)
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		websocket.ServerWs(hub, w, r)
+	})
 
 	http.ListenAndServe(":3000", nil)
-}
-
-//SocketHandler
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
-
-func SocketHandler(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Printf("upgrader.Upgrader: %v", err)
-		return
-	}
-	defer conn.Close()
-
-	for {
-		messageType, p, err := conn.ReadMessage()
-		fmt.Println(string(p))
-
-		if err != nil {
-			log.Printf("conn.ReadMessage: %v", err)
-			return
-		}
-
-		if err := conn.WriteMessage(messageType, p); err != nil {
-			log.Printf("conn.WriteMessage: %v", err)
-			return
-		}
-	}
 }

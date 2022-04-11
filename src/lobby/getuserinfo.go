@@ -13,8 +13,8 @@ type UserInfoReq struct {
 }
 
 type UserInfoRes struct {
-	Err  int    `json:"err"`
-	Nick string `json:"nick"`
+	Err  packet.ErrorCode `json:"err"`
+	Nick string           `json:"nick"`
 }
 
 func GetUserInfoHandler(w http.ResponseWriter, r *http.Request) {

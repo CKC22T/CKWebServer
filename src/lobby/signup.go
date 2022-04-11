@@ -15,7 +15,7 @@ type SignUpReq struct {
 }
 
 type SignUpRes struct {
-	Err int `json:"err"`
+	Err packet.ErrorCode `json:"err"`
 }
 
 func SignUpHandler(w http.ResponseWriter, r *http.Request) {

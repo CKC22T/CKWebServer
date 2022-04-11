@@ -13,8 +13,8 @@ type SignInReq struct {
 	Pw string `json:"pw"`
 }
 type SignInRes struct {
-	Err  int `json:"err"`
-	Uuid int `json:"uuid"`
+	Err  packet.ErrorCode `json:"err"`
+	Uuid int              `json:"uuid"`
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
