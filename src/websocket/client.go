@@ -74,6 +74,7 @@ func (c *Client) readPump() {
 			log.Printf("Request Login")
 			var nickname = req.Param["nickname"]
 			if nickname == nil {
+				//param 없음 오류
 				res.Error = packet.Unknown
 				break
 			}
@@ -97,6 +98,20 @@ func (c *Client) readPump() {
 			res.Param["port"] = r.Addr.Port
 		case packet.LookUpRoom:
 			log.Printf("Request LookUpRoom")
+			var roomCode = req.Param["roomCode"].(int)
+			if roomCode == 0 {
+				//param 없음 오류
+				res.Error = packet.Unknown
+				break
+			}
+			var r = room.Rooms[roomCode]
+			if r == nil {
+				//방이 없음 오류
+				res.Error = packet.Unknown
+				break
+			}
+			res.Param["ip"] = r.Addr.Ip
+			res.Param["port"] = r.Addr.Port
 		case packet.StartMatch:
 			log.Printf("Request StartMatch")
 		case packet.CancelMatch:
