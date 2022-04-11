@@ -67,7 +67,7 @@ type RoomInfoRes struct {
 	RoomInfo Room             `json:"roomInfo"`
 }
 
-var rooms = map[int]*Room{}
+var Rooms = map[int]*Room{}
 
 func RoomsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -76,18 +76,18 @@ func RoomsHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewDecoder(r.Body).Decode(&room)
 		fmt.Println(room.Id)
 		if room.Id > 0 {
-			if rooms[room.Id] != nil {
+			if Rooms[room.Id] != nil {
 				var roomInfo RoomInfoRes
 				roomInfo.Err = packet.Unknown
 				json.NewEncoder(w).Encode(roomInfo)
 			} else {
 				var roomInfo RoomInfoRes
 				roomInfo.Err = packet.Success
-				roomInfo.RoomInfo = *rooms[room.Id]
+				roomInfo.RoomInfo = *Rooms[room.Id]
 				json.NewEncoder(w).Encode(roomInfo)
 			}
 		} else {
-			json.NewEncoder(w).Encode(rooms)
+			json.NewEncoder(w).Encode(Rooms)
 		}
 	case http.MethodPost:
 		var room Room
@@ -97,7 +97,7 @@ func RoomsHandler(w http.ResponseWriter, r *http.Request) {
 		room.Addr = dediProc.Addr
 		room.MaxUser = 4
 		room.CurUser = 0
-		rooms[room.Id] = &room
+		Rooms[room.Id] = &room
 		var roomInfo RoomInfoRes
 		roomInfo.Err = packet.Success
 		roomInfo.RoomInfo = room
@@ -105,16 +105,16 @@ func RoomsHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		var room Room
 		json.NewDecoder(r.Body).Decode(&room)
-		rooms[room.Id].CurUser = room.CurUser
+		Rooms[room.Id].CurUser = room.CurUser
 		var roomInfo RoomInfoRes
 		roomInfo.Err = packet.Success
-		roomInfo.RoomInfo = *rooms[room.Id]
+		roomInfo.RoomInfo = *Rooms[room.Id]
 		json.NewEncoder(w).Encode(roomInfo)
 	case http.MethodDelete:
 		var room Room
 		json.NewDecoder(r.Body).Decode(&room)
 		DedicatedProcessKill(room.Id)
-		delete(rooms, room.Id)
+		delete(Rooms, room.Id)
 		json.NewEncoder(w).Encode(room)
 	}
 }
@@ -155,7 +155,7 @@ func DedicatedProcessOnEnd(w http.ResponseWriter, r *http.Request) {
 		room.Addr = addr
 		room.MaxUser = 4
 		room.CurUser = 0
-		rooms[room.Id] = &room
+		Rooms[room.Id] = &room
 		result = false
 	}
 	json.NewEncoder(w).Encode(result)

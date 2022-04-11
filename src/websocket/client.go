@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"packet"
+	"room"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -82,8 +83,18 @@ func (c *Client) readPump() {
 
 		case packet.Logout:
 			log.Printf("Request Logout")
+			c.hub.unregister <- c
 		case packet.CreateRoom:
 			log.Printf("Request CreateRoom")
+			var r room.Room
+			dediProc := room.DedicatedProcessOnBegin()
+			r.Id = dediProc.Id
+			r.Name = "temp"
+			r.Addr = dediProc.Addr
+			r.MaxUser = 4
+			r.CurUser = 0
+			res.Param["ip"] = r.Addr.Ip
+			res.Param["port"] = r.Addr.Port
 		case packet.LookUpRoom:
 			log.Printf("Request LookUpRoom")
 		case packet.StartMatch:
