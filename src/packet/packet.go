@@ -14,7 +14,7 @@ const (
 	Logout
 	CreateRoom
 	LookUpRoom
-	StartMatch
+	Match
 	CancelMatch
 )
 
@@ -26,7 +26,7 @@ type RequestPacket struct {
 func NewRequestPacket() *RequestPacket {
 	return &RequestPacket{
 		Code:  None,
-		Param: map[string]interface{}{},
+		Param: make(map[string]interface{}),
 	}
 }
 
@@ -40,6 +40,6 @@ func NewResponsePacket() *ResponsePacket {
 	return &ResponsePacket{
 		Error: Success,
 		Code:  None,
-		Param: map[string]interface{}{},
+		Param: make(map[string]interface{}),
 	}
 }

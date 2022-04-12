@@ -5,34 +5,12 @@ import (
 	"lobby"
 	"net/http"
 	_ "net/http/pprof"
-	"os"
 	"profile"
 	"room"
 	"websocket"
 
 	_ "github.com/go-sql-driver/mysql"
 )
-
-type Address struct {
-	Ip   string `json:"ip"`
-	Port int    `json:"port"`
-}
-
-type DediProc struct {
-	Proc *os.Process
-	Id   int
-	IsOn chan bool
-	Addr Address
-}
-
-type ResponsePacket struct {
-	Err   int                 `json:"err"`
-	Param map[string]struct{} `json:"param"`
-}
-
-var dediServers = map[int]*DediProc{}
-var dediCodeCount = 0
-var dediInitPort = 16000
 
 func main() {
 	room.SetIp()
