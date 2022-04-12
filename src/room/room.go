@@ -52,7 +52,7 @@ func SetIp() {
 var dediServerIp string
 var dediServers = map[int]*DediProc{}
 var dediCodeCount = 1
-var dediInitPort = 16000
+var dediInitPort = 50000
 
 type Room struct {
 	Id      int     `json:"id"`
