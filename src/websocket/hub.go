@@ -1,5 +1,14 @@
 package websocket
 
+import (
+	"encoding/json"
+	"log"
+	"packet"
+	"room"
+
+	"github.com/gorilla/websocket"
+)
+
 var clientCount int = 0
 
 type Hub struct {
@@ -18,7 +27,57 @@ func NewHub() *Hub {
 	}
 }
 
+func (h *Hub) Matching() {
+	for {
+		select {
+		case client := <-h.register:
+			h.clients[client] = true
+
+			if len(h.clients) == 2 {
+				message := packet.NewResponsePacket()
+				message.Code = packet.Match
+				message.Error = packet.Success
+				var r room.Room
+				dediProc := room.DedicatedProcessOnBegin()
+				r.Id = dediProc.Id
+				r.Name = "temp"
+				r.Addr = dediProc.Addr
+				r.MaxUser = 4
+				r.CurUser = 0
+				message.Param["ip"] = r.Addr.Ip
+				message.Param["port"] = r.Addr.Port
+				buf, err := json.Marshal(message)
+				if err != nil {
+					if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+						log.Printf("error: %v", err)
+					}
+				}
+				for client := range h.clients {
+					client.send <- buf
+					delete(h.clients, client)
+				}
+			}
+		case client := <-h.unregister:
+			if _, ok := h.clients[client]; ok {
+				delete(h.clients, client)
+			}
+		case message := <-h.broadcast:
+			for client := range h.clients {
+				select {
+				case client.send <- message:
+				default:
+					delete(h.clients, client)
+				}
+			}
+		}
+	}
+}
+
+var MatchHub *Hub
+
 func (h *Hub) Run() {
+	MatchHub = NewHub()
+	go MatchHub.Matching()
 	for {
 		select {
 		case client := <-h.register:
@@ -28,6 +87,7 @@ func (h *Hub) Run() {
 			if _, ok := h.clients[client]; ok {
 				close(client.send)
 				delete(h.clients, client)
+				MatchHub.unregister <- client
 			}
 		case message := <-h.broadcast:
 			for client := range h.clients {

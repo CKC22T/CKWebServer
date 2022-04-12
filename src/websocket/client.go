@@ -48,7 +48,9 @@ func (c *Client) readPump() {
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
 		_, message, err := c.conn.ReadMessage()
+		var res = packet.NewResponsePacket()
 		if err != nil {
+			res.Error = packet.Unknown
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
 			}
@@ -61,13 +63,11 @@ func (c *Client) readPump() {
 		var req packet.RequestPacket
 		err = json.Unmarshal(message, &req)
 		if err != nil {
+			res.Error = packet.Unknown
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
 			}
-			break
 		}
-
-		var res = packet.NewResponsePacket()
 
 		switch req.Code {
 		case packet.Login:
@@ -102,20 +102,22 @@ func (c *Client) readPump() {
 			if roomCode == 0 {
 				//param 없음 오류
 				res.Error = packet.Unknown
-				break
 			}
 			var r = room.Rooms[roomCode]
 			if r == nil {
 				//방이 없음 오류
 				res.Error = packet.Unknown
-				break
+				r.Addr.Ip = ""
+				r.Addr.Port = 0
 			}
 			res.Param["ip"] = r.Addr.Ip
 			res.Param["port"] = r.Addr.Port
-		case packet.StartMatch:
+		case packet.Match:
 			log.Printf("Request StartMatch")
+			MatchHub.register <- c
 		case packet.CancelMatch:
 			log.Printf("Request CancelMatch")
+			MatchHub.unregister <- c
 		default:
 			res.Error = packet.Unknown
 		}
@@ -125,7 +127,6 @@ func (c *Client) readPump() {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
 			}
-			break
 		}
 
 		c.send <- buf
