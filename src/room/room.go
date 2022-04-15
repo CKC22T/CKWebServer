@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"os/exec"
 	"packet"
 	"strconv"
@@ -21,7 +20,7 @@ type Address struct {
 }
 
 type DediProc struct {
-	Proc *os.Process
+	Proc *exec.Cmd
 	Id   int
 	IsOn chan bool
 	Addr Address
@@ -106,10 +105,16 @@ func RoomsHandler(w http.ResponseWriter, r *http.Request) {
 		var room Room
 		json.NewDecoder(r.Body).Decode(&room)
 		Rooms[room.Id].CurUser = room.CurUser
-		var roomInfo RoomInfoRes
-		roomInfo.Err = packet.Success
-		roomInfo.RoomInfo = *Rooms[room.Id]
-		json.NewEncoder(w).Encode(roomInfo)
+		if room.CurUser <= 0 {
+			DedicatedProcessKill(room.Id)
+			delete(Rooms, room.Id)
+			json.NewEncoder(w).Encode(room)
+		} else {
+			var roomInfo RoomInfoRes
+			roomInfo.Err = packet.Success
+			roomInfo.RoomInfo = *Rooms[room.Id]
+			json.NewEncoder(w).Encode(roomInfo)
+		}
 	case http.MethodDelete:
 		var room Room
 		json.NewDecoder(r.Body).Decode(&room)
@@ -120,6 +125,7 @@ func RoomsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DedicatedProcessOnBegin() *DediProc {
+	//process := exec.Command("../../Build/ServerBuild/CKC2022.exe", strconv.Itoa(packet.START_BY_WEB), strconv.Itoa(dediCodeCount))
 	process := exec.Command("../../Build/ServerBuild/CKC2022.exe", strconv.Itoa(dediCodeCount))
 	process.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 16, NoInheritHandles: true}
 
@@ -127,7 +133,7 @@ func DedicatedProcessOnBegin() *DediProc {
 	if err != nil {
 		log.Println(err)
 	}
-	dediProc := &DediProc{Proc: process.Process, Id: dediCodeCount, Addr: Address{dediServerIp, dediInitPort + dediCodeCount}}
+	dediProc := &DediProc{Proc: process, Id: dediCodeCount, Addr: Address{dediServerIp, dediInitPort + dediCodeCount}}
 	dediServers[dediCodeCount] = dediProc
 	dediCodeCount = dediCodeCount + 1
 
@@ -162,14 +168,16 @@ func DedicatedProcessOnEnd(w http.ResponseWriter, r *http.Request) {
 }
 
 func DedicatedProcessKill(id int) {
-	dediServers[id].Proc.Kill()
+	dediServers[id].Proc.Process.Kill()
+	delete(dediServers, id)
+	//delete(Rooms, id)
 }
 
 func RoomProfileHandler(w http.ResponseWriter, r *http.Request) {
 	var room Room
 	json.NewDecoder(r.Body).Decode(&room)
 	id, _ := strconv.Atoi(r.URL.Query()["id"][0])
-	var pid = dediServers[id].Proc.Pid
+	var pid = dediServers[id].Proc.Process.Pid
 
 	html := "<html>Room id : " + strconv.FormatInt(int64(id), 10) + "<br>"
 
@@ -264,6 +272,9 @@ func RoomProfileHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+
+	html = html + "<br>"
+	html = html + "<br>"
 
 	html = html + "</html>"
 
