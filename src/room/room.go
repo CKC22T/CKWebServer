@@ -125,8 +125,8 @@ func RoomsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DedicatedProcessOnBegin() *DediProc {
-	//process := exec.Command("../../Build/ServerBuild/CKC2022.exe", strconv.Itoa(packet.START_BY_WEB), strconv.Itoa(dediCodeCount))
-	process := exec.Command("../../Build/ServerBuild/CKC2022.exe", strconv.Itoa(dediCodeCount))
+	process := exec.Command("../../Build/ServerBuild/CKC2022.exe", strconv.Itoa(packet.START_BY_WEB), strconv.Itoa(dediCodeCount))
+	//process := exec.Command("../../Build/ServerBuild/CKC2022.exe", strconv.Itoa(dediCodeCount))
 	process.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 16, NoInheritHandles: true}
 
 	err := process.Start()
@@ -215,7 +215,7 @@ func RoomProfileHandler(w http.ResponseWriter, r *http.Request) {
 
 			html = html + "pid : " + strconv.FormatInt(int64(ps.Pid), 10) + "<br>"
 			html = html + "status : " + ps.String() + "<br>"
-			html = html + "cpu : " + strconv.FormatFloat(pCpu/16, 'f', 2, 64) + "%<br>"
+			html = html + "cpu : " + strconv.FormatFloat(pCpu, 'f', 2, 64) + "%<br>"
 			for _, aff := range pCpuAff {
 				html = html + "cpu aff : " + strconv.FormatInt(int64(aff), 10) + "<br>"
 			}

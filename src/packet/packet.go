@@ -4,6 +4,10 @@ type ErrorCode int
 type Protocol int
 
 const (
+	START_BY_WEB = 2
+)
+
+const (
 	Unknown ErrorCode = iota - 1
 	Success
 )
