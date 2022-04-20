@@ -71,6 +71,7 @@ func (c *Client) readPump() {
 
 		switch req.Code {
 		case packet.Login:
+			res.Code = packet.Login
 			log.Printf("Request Login")
 			var nickname = req.Param["nickname"]
 			if nickname == nil {
@@ -83,9 +84,11 @@ func (c *Client) readPump() {
 			hashCount = hashCount + 1
 
 		case packet.Logout:
+			res.Code = packet.Logout
 			log.Printf("Request Logout")
 			c.hub.unregister <- c
 		case packet.CreateRoom:
+			res.Code = packet.CreateRoom
 			log.Printf("Request CreateRoom")
 			var r room.Room
 			dediProc := room.DedicatedProcessOnBegin()
@@ -97,6 +100,7 @@ func (c *Client) readPump() {
 			res.Param["ip"] = r.Addr.Ip
 			res.Param["port"] = r.Addr.Port
 		case packet.LookUpRoom:
+			res.Code = packet.LookUpRoom
 			log.Printf("Request LookUpRoom")
 			var roomCode = req.Param["roomCode"].(int)
 			if roomCode == 0 {
@@ -113,9 +117,11 @@ func (c *Client) readPump() {
 			res.Param["ip"] = r.Addr.Ip
 			res.Param["port"] = r.Addr.Port
 		case packet.Match:
+			res.Code = packet.Match
 			log.Printf("Request StartMatch")
 			MatchHub.register <- c
 		case packet.CancelMatch:
+			res.Code = packet.CancelMatch
 			log.Printf("Request CancelMatch")
 			MatchHub.unregister <- c
 		default:

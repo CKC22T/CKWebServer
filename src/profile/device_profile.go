@@ -42,6 +42,8 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 	interfStat, err := net.Interfaces()
 	dealwithErr(err)
 
+	//ioCounters, err := net.IOCounters(false)
+
 	html := "<html>OS : " + runtimeOS + "<br>"
 	html = html + "Total memory: " + strconv.FormatUint(vmStat.Total, 10) + " bytes <br>"
 	html = html + "Free memory: " + strconv.FormatUint(vmStat.Free, 10) + " bytes<br>"
