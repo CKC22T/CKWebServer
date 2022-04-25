@@ -102,7 +102,7 @@ func (c *Client) readPump() {
 		case packet.LookUpRoom:
 			res.Code = packet.LookUpRoom
 			log.Printf("Request LookUpRoom")
-			var roomCode = req.Param["roomCode"].(int)
+			roomCode := int(req.Param["roomCode"].(float64))
 			if roomCode == 0 {
 				//param 없음 오류
 				res.Error = packet.Unknown
@@ -111,15 +111,14 @@ func (c *Client) readPump() {
 			if r == nil {
 				//방이 없음 오류
 				res.Error = packet.Unknown
-				r.Addr.Ip = ""
-				r.Addr.Port = 0
+				r.Addr = room.Address{Ip: "", Port: 0}
 			}
 			res.Param["ip"] = r.Addr.Ip
 			res.Param["port"] = r.Addr.Port
 		case packet.Match:
-			res.Code = packet.Match
 			log.Printf("Request StartMatch")
 			MatchHub.register <- c
+			continue
 		case packet.CancelMatch:
 			res.Code = packet.CancelMatch
 			log.Printf("Request CancelMatch")

@@ -33,7 +33,7 @@ func (h *Hub) Matching() {
 		case client := <-h.register:
 			h.clients[client] = true
 
-			if len(h.clients) == 2 {
+			if len(h.clients) >= 2 {
 				message := packet.NewResponsePacket()
 				message.Code = packet.Match
 				message.Error = packet.Success

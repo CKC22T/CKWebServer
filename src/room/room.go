@@ -154,6 +154,15 @@ func DedicatedProcessOnEnd(w http.ResponseWriter, r *http.Request) {
 	var procId = addr.Port - dediInitPort
 	var result bool = true
 	if dediServers[procId] != nil {
+		if Rooms[procId] == nil {
+			var room Room
+			room.Id = procId
+			room.Addr = addr
+			room.MaxUser = 4
+			room.CurUser = 0
+			Rooms[room.Id] = &room
+			result = false
+		}
 		dediServers[procId].IsOn <- true
 	} else {
 		var room Room
