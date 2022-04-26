@@ -10,6 +10,8 @@ const (
 const (
 	Unknown ErrorCode = iota - 1
 	Success
+	NotFoundParam
+	NotFoundRoom
 )
 
 const (
@@ -32,6 +34,15 @@ func NewRequestPacket() *RequestPacket {
 		Code:  None,
 		Param: make(map[string]interface{}),
 	}
+}
+
+func ContainsParam(res *ResponsePacket, req *RequestPacket, paramKey string) bool {
+	var param = req.Param[paramKey]
+	if param == nil {
+		res.Error = NotFoundParam
+		return false
+	}
+	return true
 }
 
 type ResponsePacket struct {
