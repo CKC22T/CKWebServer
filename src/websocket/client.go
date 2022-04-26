@@ -37,6 +37,68 @@ type Client struct {
 	send chan []byte
 }
 
+func eventHandle(c *Client, req *packet.RequestPacket) *packet.ResponsePacket {
+	var res = packet.NewResponsePacket()
+	switch req.Code {
+	case packet.Login:
+		res.Code = packet.Login
+		log.Printf("Request Login")
+		var nickname = req.Param["nickname"]
+		if nickname == nil {
+			//param 없음 오류
+			res.Error = packet.Unknown
+			break
+		}
+		res.Param["nickname"] = req.Param["nickname"]
+		res.Param["hashTag"] = hashCount
+		hashCount = hashCount + 1
+
+	case packet.Logout:
+		res.Code = packet.Logout
+		log.Printf("Request Logout")
+		c.hub.unregister <- c
+	case packet.CreateRoom:
+		res.Code = packet.CreateRoom
+		log.Printf("Request CreateRoom")
+		var r room.Room
+		dediProc := room.DedicatedProcessOnBegin()
+		r.Id = dediProc.Id
+		r.Name = "temp"
+		r.Addr = dediProc.Addr
+		r.MaxUser = 4
+		r.CurUser = 0
+		res.Param["ip"] = r.Addr.Ip
+		res.Param["port"] = r.Addr.Port
+	case packet.LookUpRoom:
+		res.Code = packet.LookUpRoom
+		log.Printf("Request LookUpRoom")
+		roomCode := int(req.Param["roomCode"].(float64))
+		if roomCode == 0 {
+			//param 없음 오류
+			res.Error = packet.Unknown
+		}
+		var r = room.Rooms[roomCode]
+		if r == nil {
+			//방이 없음 오류
+			res.Error = packet.Unknown
+			r.Addr = room.Address{Ip: "", Port: 0}
+		}
+		res.Param["ip"] = r.Addr.Ip
+		res.Param["port"] = r.Addr.Port
+	case packet.Match:
+		log.Printf("Request StartMatch")
+		MatchHub.register <- c
+	case packet.CancelMatch:
+		res.Code = packet.CancelMatch
+		log.Printf("Request CancelMatch")
+		MatchHub.unregister <- c
+	default:
+		res.Error = packet.Unknown
+	}
+
+	return res
+}
+
 func (c *Client) readPump() {
 	defer func() {
 		c.hub.unregister <- c
@@ -67,64 +129,12 @@ func (c *Client) readPump() {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
 			}
+		} else {
+			res = eventHandle(c, &req)
 		}
 
-		switch req.Code {
-		case packet.Login:
-			res.Code = packet.Login
-			log.Printf("Request Login")
-			var nickname = req.Param["nickname"]
-			if nickname == nil {
-				//param 없음 오류
-				res.Error = packet.Unknown
-				break
-			}
-			res.Param["nickname"] = req.Param["nickname"]
-			res.Param["hashTag"] = hashCount
-			hashCount = hashCount + 1
-
-		case packet.Logout:
-			res.Code = packet.Logout
-			log.Printf("Request Logout")
-			c.hub.unregister <- c
-		case packet.CreateRoom:
-			res.Code = packet.CreateRoom
-			log.Printf("Request CreateRoom")
-			var r room.Room
-			dediProc := room.DedicatedProcessOnBegin()
-			r.Id = dediProc.Id
-			r.Name = "temp"
-			r.Addr = dediProc.Addr
-			r.MaxUser = 4
-			r.CurUser = 0
-			res.Param["ip"] = r.Addr.Ip
-			res.Param["port"] = r.Addr.Port
-		case packet.LookUpRoom:
-			res.Code = packet.LookUpRoom
-			log.Printf("Request LookUpRoom")
-			roomCode := int(req.Param["roomCode"].(float64))
-			if roomCode == 0 {
-				//param 없음 오류
-				res.Error = packet.Unknown
-			}
-			var r = room.Rooms[roomCode]
-			if r == nil {
-				//방이 없음 오류
-				res.Error = packet.Unknown
-				r.Addr = room.Address{Ip: "", Port: 0}
-			}
-			res.Param["ip"] = r.Addr.Ip
-			res.Param["port"] = r.Addr.Port
-		case packet.Match:
-			log.Printf("Request StartMatch")
-			MatchHub.register <- c
+		if res.Code == packet.None {
 			continue
-		case packet.CancelMatch:
-			res.Code = packet.CancelMatch
-			log.Printf("Request CancelMatch")
-			MatchHub.unregister <- c
-		default:
-			res.Error = packet.Unknown
 		}
 
 		buf, err := json.Marshal(res)
@@ -135,8 +145,6 @@ func (c *Client) readPump() {
 		}
 
 		c.send <- buf
-		//broadcast
-		//c.hub.broadcast <- message
 	}
 }
 
