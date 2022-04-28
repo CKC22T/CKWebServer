@@ -8,15 +8,14 @@ import (
 
 var dbroot string = "root:gomjun423009@tcp(gomjun.asuscomm.com:3306)/olympus"
 
-func SignUp(id string, pw string, nick string) bool {
+func SignUp(nickname string) bool {
 	db, err := sql.Open("mysql", dbroot)
 	if err != nil {
 		panic(err)
 	}
-
 	defer db.Close()
 
-	result, err := db.Exec("INSERT INTO user(create_time, update_time, account_id, account_pw, nickname) VALUES(now(), now(), '" + id + "', '" + pw + "', '" + nick + "')")
+	result, err := db.Exec("INSERT INTO user(nickname) VALUES('" + nickname + "')")
 	if err != nil {
 		log.Fatal(err)
 		return false
@@ -26,21 +25,43 @@ func SignUp(id string, pw string, nick string) bool {
 	return true
 }
 
-func Login(id string, pw string) int {
+func Login(nickname string, id int) int {
+	if id <= 0 {
+		return 0
+	}
+	id_str := strconv.FormatInt(int64(id), 10)
+
 	db, err := sql.Open("mysql", dbroot)
 	if err != nil {
 		panic(err)
 	}
-
 	defer db.Close()
 
 	var uuid int
-	err = db.QueryRow("SELECT id FROM user WHERE account_id = '" + id + "' AND account_pw = '" + pw + "'").Scan(&uuid)
+	err = db.QueryRow("SELECT id FROM `user` WHERE nickname = '" + nickname + "' AND id = '" + id_str + "'").Scan(&uuid)
 	if err != nil {
 		return 0
 	}
+	db.QueryRow("UPDATE `user` SET access_count = access_count + 1, update_time = NOW() WHERE id = " + id_str)
 
 	return uuid
+}
+
+func ChangeNickname(nickname string, id int) bool {
+	if id <= 0 {
+		return false
+	}
+	id_str := strconv.FormatInt(int64(id), 10)
+
+	db, err := sql.Open("mysql", dbroot)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	db.QueryRow("UPDATE `user` SET nickname = " + nickname + ", update_time = NOW() WHERE id = " + id_str)
+
+	return true
 }
 
 type DTOUserInfo struct {

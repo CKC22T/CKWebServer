@@ -17,16 +17,12 @@ func main() {
 	hub := websocket.NewHub()
 	go hub.Run()
 
-	http.HandleFunc("/login", lobby.LoginHandler)
-	http.HandleFunc("/signup", lobby.SignUpHandler)
-	http.HandleFunc("/getuserinfo", lobby.GetUserInfoHandler)
 	http.HandleFunc("/rooms", room.RoomsHandler)
 	http.HandleFunc("/user", lobby.GetUserInfoHandler)
-	//http.HandleFunc("/run", ProcessHandler)
 	http.HandleFunc("/open", room.DedicatedProcessOnEnd)
 
 	http.HandleFunc("/profile", profile.ProfileHandler)
-	http.HandleFunc("/room/profile", room.RoomProfileHandler)
+	http.HandleFunc("/room/profile", profile.RoomProfileHandler)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Hello, world")
