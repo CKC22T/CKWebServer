@@ -38,14 +38,10 @@ func (h *Hub) Matching() {
 				message.Code = packet.Match
 				message.Error = packet.Success
 				var r room.Room
-				dediProc := room.DedicatedProcessOnBegin()
-				r.Id = dediProc.Id
-				r.Name = "temp"
-				r.Addr = dediProc.Addr
-				r.MaxUser = 4
-				r.CurUser = 0
-				message.Param["ip"] = r.Addr.Ip
-				message.Param["port"] = r.Addr.Port
+				room.DedicatedProcessOnBegin(&r)
+				r.Info.Name = "temp"
+				message.Param["ip"] = r.Info.Addr.Ip
+				message.Param["port"] = r.Info.Addr.Port
 				buf, err := json.Marshal(message)
 				if err != nil {
 					if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {

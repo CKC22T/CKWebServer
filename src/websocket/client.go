@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"packet"
 	"room"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -37,11 +39,41 @@ type Client struct {
 	send chan []byte
 }
 
+func logindb(nickname string, res *packet.ResponsePacket) {
+	account := strings.Split(nickname, "#")
+	req := packet.NewRequestPacket()
+
+	uri := "signup"
+
+	req.Param["nickname"] = account[0]
+	if len(account) >= 2 {
+		log.Printf("Login User : " + account[0] + " # " + account[1])
+		req.Param["id"], _ = strconv.ParseInt(account[1], 10, 0)
+		uri = "login"
+	}
+	request, _ := json.Marshal(req)
+	reqBody := bytes.NewBufferString(string(request))
+	resPost, err := http.Post("http://127.0.0.1:3010/"+uri, "text/plain", reqBody)
+	if err != nil {
+		res.Error = packet.Unknown
+		panic(err)
+	}
+	defer resPost.Body.Close()
+
+	json.NewDecoder(resPost.Body).Decode(res)
+}
+
 func eventLogin(res *packet.ResponsePacket, req *packet.RequestPacket) {
 	log.Printf("Request Login")
 	if !packet.ContainsParam(res, req, "nickname") {
 		return
 	}
+
+	logindb(req.Param["nickname"].(string), res)
+	if res.Error != packet.Success {
+		return
+	}
+
 	res.Code = packet.Login
 	res.Param["nickname"] = req.Param["nickname"]
 	res.Param["hashTag"] = hashCount
@@ -57,15 +89,10 @@ func eventLogout(c *Client, res *packet.ResponsePacket, req *packet.RequestPacke
 func eventCreateRoom(res *packet.ResponsePacket) {
 	log.Printf("Request CreateRoom")
 	res.Code = packet.CreateRoom
-	dediProc := room.DedicatedProcessOnBegin()
 	var r room.Room
-	r.Id = dediProc.Id
-	r.Name = "temp"
-	r.Addr = dediProc.Addr
-	r.MaxUser = 4
-	r.CurUser = 0
-	res.Param["ip"] = r.Addr.Ip
-	res.Param["port"] = r.Addr.Port
+	room.DedicatedProcessOnBegin(&r)
+	res.Param["ip"] = r.Info.Addr.Ip
+	res.Param["port"] = r.Info.Addr.Port
 }
 
 func eventLookUpRoom(res *packet.ResponsePacket, req *packet.RequestPacket) {
@@ -86,8 +113,8 @@ func eventLookUpRoom(res *packet.ResponsePacket, req *packet.RequestPacket) {
 		res.Error = packet.NotFoundRoom
 		return
 	}
-	res.Param["ip"] = r.Addr.Ip
-	res.Param["port"] = r.Addr.Port
+	res.Param["ip"] = r.Info.Addr.Ip
+	res.Param["port"] = r.Info.Addr.Port
 }
 
 func eventMatch(c *Client) {
