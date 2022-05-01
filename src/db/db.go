@@ -88,3 +88,22 @@ func GetUserData(uuid int) *DTOUserInfo {
 
 	return userInfo
 }
+
+func Log(logType string, targetType string, targetCode int, logJsonData string) bool {
+	db, err := sql.Open("mysql", dbroot)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	targetCode_str := strconv.FormatInt(int64(targetCode), 10)
+
+	result, err := db.Exec("INSERT INTO log VALUES(now(), '" + logType + "', '" + targetType + "', " + targetCode_str + ", '" + logJsonData + "')")
+	if err != nil {
+		log.Fatal(err)
+		return false
+	}
+	result.RowsAffected()
+
+	return true
+}
