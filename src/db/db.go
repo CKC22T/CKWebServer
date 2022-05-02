@@ -30,7 +30,6 @@ func Login(nickname string, id int) int {
 	if id <= 0 {
 		return 0
 	}
-	//id_str := strconv.FormatInt(int64(id), 10)
 
 	db, err := sql.Open("mysql", dbroot)
 	if err != nil {
@@ -97,9 +96,24 @@ func Log(logType string, targetType string, targetCode int, logJsonData string) 
 	}
 	defer db.Close()
 
-	targetCode_str := strconv.FormatInt(int64(targetCode), 10)
+	result, err := db.Exec("INSERT INTO log VALUES(now(), ?, ?, ?, ?)", logType, targetType, targetCode, logJsonData)
+	if err != nil {
+		log.Fatal(err)
+		return false
+	}
+	result.RowsAffected()
 
-	result, err := db.Exec("INSERT INTO log VALUES(now(), '" + logType + "', '" + targetType + "', " + targetCode_str + ", '" + logJsonData + "')")
+	return true
+}
+
+func JoinTime(id int, time float64) bool {
+	db, err := sql.Open("mysql", dbroot)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	result, err := db.Exec("INSERT INTO join_time VALUES(?, now(), ?)", id, time)
 	if err != nil {
 		log.Fatal(err)
 		return false
