@@ -36,8 +36,17 @@ func NewRequestPacket() *RequestPacket {
 	}
 }
 
-func ContainsParam(res *ResponsePacket, req *RequestPacket, paramKey string) bool {
+func ContainsParamReq(res *ResponsePacket, req *RequestPacket, paramKey string) bool {
 	var param = req.Param[paramKey]
+	if param == nil {
+		res.Error = NotFoundParam
+		return false
+	}
+	return true
+}
+
+func ContainsParamRes(res *ResponsePacket, paramKey string) bool {
+	var param = res.Param[paramKey]
 	if param == nil {
 		res.Error = NotFoundParam
 		return false

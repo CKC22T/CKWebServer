@@ -18,10 +18,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//내부 로직
-	if !packet.ContainsParam(res, req, "nickname") {
+	if !packet.ContainsParamReq(res, req, "nickname") {
 		return
 	}
-	if !packet.ContainsParam(res, req, "id") {
+	if !packet.ContainsParamReq(res, req, "id") {
 		return
 	}
 	var nickname string = req.Param["nickname"].(string)
@@ -31,7 +31,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if uuid == 0 {
 		res.Error = packet.Unknown
 	}
-
 	res.Param["uuid"] = uuid
 
 	response, _ := json.Marshal(res)

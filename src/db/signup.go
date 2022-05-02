@@ -18,18 +18,19 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !packet.ContainsParam(res, req, "nickname") {
+	if !packet.ContainsParamReq(res, req, "nickname") {
 		return
 	}
 	var nickname string = req.Param["nickname"].(string)
 
-	result := SignUp(nickname)
+	uuid := SignUp(nickname)
 
-	if result {
-		res.Error = packet.Success
-	} else {
+	if uuid == 0 {
 		res.Error = packet.Unknown
+	} else {
+		res.Error = packet.Success
 	}
+	res.Param["uuid"] = uuid
 
 	response, _ := json.Marshal(res)
 	w.Header().Add("content-type", "application/json")

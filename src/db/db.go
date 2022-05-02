@@ -8,28 +8,29 @@ import (
 
 var dbroot string = "root:gomjun423009@tcp(gomjun.asuscomm.com:3306)/olympus"
 
-func SignUp(nickname string) bool {
+func SignUp(nickname string) int {
 	db, err := sql.Open("mysql", dbroot)
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
 
-	result, err := db.Exec("INSERT INTO user(nickname) VALUES('" + nickname + "')")
+	result, err := db.Exec("INSERT INTO user(nickname) VALUES(?)", nickname)
+	id, _ := result.LastInsertId()
 	if err != nil {
-		log.Fatal(err)
-		return false
+		log.Print(err.Error())
+		return 0
 	}
 	result.RowsAffected()
 
-	return true
+	return int(id)
 }
 
 func Login(nickname string, id int) int {
 	if id <= 0 {
 		return 0
 	}
-	id_str := strconv.FormatInt(int64(id), 10)
+	//id_str := strconv.FormatInt(int64(id), 10)
 
 	db, err := sql.Open("mysql", dbroot)
 	if err != nil {
@@ -38,11 +39,11 @@ func Login(nickname string, id int) int {
 	defer db.Close()
 
 	var uuid int
-	err = db.QueryRow("SELECT id FROM `user` WHERE nickname = '" + nickname + "' AND id = '" + id_str + "'").Scan(&uuid)
+	err = db.QueryRow("SELECT id FROM `user` WHERE nickname = ? AND id = ?", nickname, id).Scan(&uuid)
 	if err != nil {
 		return 0
 	}
-	db.QueryRow("UPDATE `user` SET access_count = access_count + 1, update_time = NOW() WHERE id = " + id_str)
+	db.QueryRow("UPDATE `user` SET access_count = access_count + 1, update_time = NOW() WHERE id = ?", id)
 
 	return uuid
 }
