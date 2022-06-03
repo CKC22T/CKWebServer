@@ -84,10 +84,12 @@ func (c *Client) readPump() {
 }
 
 func (c *Client) writePump() {
+	c.hub.broadcastClientCount()
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
 		c.conn.Close()
+		c.hub.broadcastClientCount()
 	}()
 	for {
 		select {

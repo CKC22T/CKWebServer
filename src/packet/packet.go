@@ -22,6 +22,7 @@ const (
 	LookUpRoom
 	Match
 	CancelMatch
+	ClientCount
 )
 
 type RequestPacket struct {

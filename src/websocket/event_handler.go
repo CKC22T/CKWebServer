@@ -9,6 +9,8 @@ import (
 	"room"
 	"strconv"
 	"strings"
+
+	"github.com/gorilla/websocket"
 )
 
 var dbUrl string = "http://127.0.0.1:3010"
@@ -119,6 +121,20 @@ func eventCancelMatch(c *Client, res *packet.ResponsePacket) {
 	MatchHub.unregister <- c
 }
 
+func (h *Hub) broadcastClientCount() {
+	res := packet.NewResponsePacket()
+	res.Code = packet.ClientCount
+	res.Param["clientCount"] = clientCount
+	res.Error = packet.Success
+	buf, err := json.Marshal(res)
+	if err != nil {
+		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			log.Printf("error: %v", err)
+		}
+	}
+	h.broadcast <- buf
+}
+
 func eventHandle(c *Client, req *packet.RequestPacket) *packet.ResponsePacket {
 	var res = packet.NewResponsePacket()
 	switch req.Code {
@@ -134,6 +150,8 @@ func eventHandle(c *Client, req *packet.RequestPacket) *packet.ResponsePacket {
 		eventMatch(c)
 	case packet.CancelMatch:
 		eventCancelMatch(c, res)
+	case packet.ClientCount:
+		c.hub.broadcastClientCount()
 	default:
 		res.Error = packet.Unknown
 	}

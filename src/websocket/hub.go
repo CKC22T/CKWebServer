@@ -83,6 +83,7 @@ func (h *Hub) Run() {
 			if _, ok := h.clients[client]; ok {
 				close(client.send)
 				delete(h.clients, client)
+				clientCount = clientCount - 1
 				MatchHub.unregister <- client
 			}
 		case message := <-h.broadcast:
